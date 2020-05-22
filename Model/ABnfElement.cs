@@ -147,7 +147,7 @@ namespace ALittle
             if (length <= 2) return "";
             length -= 2;
             int start = GetStart() + 1;
-            if (start >= m_file.GetLength()) return "";;
+            if (start >= m_file.GetLength()) return "";
             return m_file.Substring(start, length);
         }
 

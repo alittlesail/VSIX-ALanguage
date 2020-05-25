@@ -82,6 +82,9 @@ namespace ALittle
         {
             return null;
         }
+
+        // 是否可以跳转
+        public virtual bool CanGotoDefinition() { return true; }
     }
     public class ABnfReferenceWrap<T> : ABnfReference { }
 

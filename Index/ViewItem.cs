@@ -676,6 +676,7 @@ namespace ALittle
             var element = GetException(offset);
             if (element == null) return;
             if (element is ABnfErrorElement) return;
+            if (!element.GetReference().CanGotoDefinition()) return;
 
             int start = element.GetStart();
             int length = element.GetLength();

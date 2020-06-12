@@ -123,45 +123,13 @@ namespace ALittle
             return file_path;
         }
 
-        // 打开文件
-        public static bool OpenFile(string full_path)
-        {
-            if (s_service_provider == null) return false;
-            // 判断文件是否存在
-            if (!File.Exists(full_path)) return false;
-
-            var open_document = s_service_provider.GetService(typeof(SVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
-            if (open_document == null) return false;
-
-            // 打开文档
-            IVsUIHierarchy project;
-            uint item_id;
-            IVsWindowFrame frame;
-            Microsoft.VisualStudio.OLE.Interop.IServiceProvider provider;
-            open_document.OpenDocumentViaProject(full_path, VSConstants.LOGVIEWID.TextView_guid
-                , out provider, out project, out item_id, out frame);
-            if (frame == null) return false;
-
-            // 显示界面
-            frame.Show();
-            object code_window_object;
-            frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocView, out code_window_object);
-            if (code_window_object == null) return false;
-            IVsCodeWindow code_window = code_window_object as IVsCodeWindow;
-            if (code_window == null) return false;
-            IVsTextView view;
-            code_window.GetLastActiveView(out view);
-            if (view == null) code_window.GetPrimaryView(out view);
-            if (view == null) return false;
-
-            return true;
-        }
-
         public static bool OpenFile(IVsUIShellOpenDocument open_document, IVsEditorAdaptersFactoryService adapters_factory, string full_path, int start, int length)
         {
             // 判断文件是否存在
             if (!File.Exists(full_path)) return false;
 
+            if (open_document == null)
+                open_document = s_service_provider.GetService(typeof(SVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
             if (open_document == null) return false;
 
             // 打开文档
@@ -186,6 +154,7 @@ namespace ALittle
             if (view == null) return false;
 
             if (adapters_factory == null) return false;
+            if (length <= 0) return false;
 
             // 跳转到对应的位置
             var wpf = adapters_factory.GetWpfTextView(view);

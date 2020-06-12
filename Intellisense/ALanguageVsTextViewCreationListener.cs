@@ -34,12 +34,16 @@ namespace ALittle
                 m_factory.Dispose();
         }
 
+        protected virtual void SaveAdapterFactory() { }
+
         public void VsTextViewCreated(IVsTextView text_view)
         {
             if (ALanguageUtility.s_service_provider == null)
                 ALanguageUtility.s_service_provider = m_service_provider;
 
             if (m_factory == null) return;
+
+            SaveAdapterFactory();
             m_factory.Init(m_service_provider, m_adapters_factory);
 
             // 获取系统单例，用于打开文件

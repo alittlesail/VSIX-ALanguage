@@ -31,6 +31,12 @@ namespace ALittle
 
         // 获取所有文件
         public Dictionary<string, FileItem> GetAllFile() { return m_path_map_node; }
+        // 根据路径获取文件
+        public FileItem GetFile(string path)
+        {
+            m_path_map_node.TryGetValue(path, out var value);
+            return value;
+        }
         
         // 更新FileItem对象
         public void UpdateFileItem(uint item_id, ABnfFile file, bool need_analysis)

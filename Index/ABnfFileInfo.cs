@@ -78,17 +78,13 @@ namespace ALittle
 
         protected void AnalysisError(ABnfElement element)
         {
-            if (element is ABnfErrorElement)
-            {
-                AddCheckErrorInfo(element, (element as ABnfErrorElement).GetValue());
-                return;
-            }
+            if (element is ABnfErrorElement) return;
 
             var error = element.GetReference().CheckError();
             if (error != null)
             {
                 if (error.GetElement() != null)
-                    AddCheckErrorInfo(error.GetElement(), error.GetError());
+                    AddAnalysisErrorInfo(error.GetElement(), error.GetError());
             }
             var node = element as ABnfNodeElement;
             if (node == null) return;

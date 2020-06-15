@@ -171,12 +171,14 @@ namespace ALittle
             string name;
             m_project.GetCanonicalName(itemid, out name);
 
-            var server = m_solution.GetServer();
-            if (server != null) server.AddTask(() => server.RemoveFileItem(m_path, itemid));
-            if (server != null) server.AddTask(() => server.AddFileItem(m_path, name, itemid));
-
             if (m_view_map.TryGetValue(itemid, out UIViewItem item))
                 item.CheckFullPath();
+            else
+			{
+                var server = m_solution.GetServer();
+                if (server != null) server.AddTask(() => server.RemoveFileItem(m_path, itemid));
+                if (server != null) server.AddTask(() => server.AddFileItem(m_path, name, itemid));
+            }
 
             return VSConstants.S_OK;
         }

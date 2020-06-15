@@ -92,6 +92,7 @@ namespace ALittle
             if (m_file == null) return;
 
             m_file.ClearCheckError();
+            m_file.ClearAnalysisError();
             m_file.UpdateError();
 
             // 解析ALanguageErrorInfo

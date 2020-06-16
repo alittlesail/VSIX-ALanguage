@@ -193,16 +193,22 @@ namespace ALittle
                             if (info != null)
                             {
                                 var position = m_view.Caret.Position.BufferPosition.Position;
+                                var handle = false;
                                 // 尝试填补配对字符
                                 if (m_string_pair.TryGetValue(c, out string out_pair))
                                 {
-                                    info.PushAutoPair(position, c, out_pair);
+                                    handle = info.PushAutoPair(position, c, out_pair);
                                 }
 
                                 if (m_view.Properties.TryGetProperty(nameof(ALanguageController), out ALanguageController controller))
                                 {
                                     controller.OnTextInput(position-1);
                                 }
+
+                                if (!handle)
+								{
+                                    info.TypeChar(position, c);
+								}
                             }
 
                             break;

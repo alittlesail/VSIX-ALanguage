@@ -198,5 +198,10 @@ namespace ALittle
             view.TextBuffer.Replace(new Span(start, length), string.Join("\n", new_list));
             return true;
         }
+
+        public virtual bool TypeChar(UIViewItem info, int offset, char c)
+		{
+            return false;
+		}
     }
 }

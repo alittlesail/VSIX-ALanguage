@@ -91,7 +91,7 @@ namespace ALittle
             if (project != null) solution.GetProjects().TryGetValue(project, out project_info);
             
             // 创建信息，并作为属性给view
-            var info = new UIViewItem(m_abnf, m_abnf_ui, view, m_service_provider, m_adapters_factory, project_info, item_id, full_path, m_factory.GetLineCommentBegin());
+            var info = new UIViewItem(m_abnf, m_abnf_ui, view, m_service_provider, m_adapters_factory, project_info, item_id, full_path, m_factory, m_factory.GetLineCommentBegin());
             view.Properties.AddProperty(nameof(UIViewItem), info);
             view.TextBuffer.Properties.AddProperty(nameof(UIViewItem), info);
             

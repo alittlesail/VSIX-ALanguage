@@ -13,6 +13,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Windows;
 
 namespace ALittle
@@ -30,6 +31,7 @@ namespace ALittle
         protected bool m_saved = false;     // 是否保存
         protected string m_line_comment_begin = "";  // 起始注释字符
         protected ABnfElement m_indent_root = null;
+        protected ABnfFactory m_factory;
 
         // 框架接口
         SVsServiceProvider m_provider;
@@ -42,7 +44,7 @@ namespace ALittle
 
         public UIViewItem(ABnf abnf, ABnf abnf_ui, IWpfTextView view
             , SVsServiceProvider provider, IVsEditorAdaptersFactoryService adapters_factory
-            , UIProjectInfo project, uint item_id, string full_path, string line_comment_begin)
+            , UIProjectInfo project, uint item_id, string full_path, ABnfFactory factory, string line_comment_begin)
         {
             m_left_pairs.Add("(", ")");
             m_left_pairs.Add("[", "]");
@@ -57,6 +59,7 @@ namespace ALittle
             // 保存相关信息
             m_abnf = abnf;
             m_abnf_ui = abnf_ui;
+            m_factory = factory;
             m_view = view;
             m_buffer = m_view.TextBuffer;
             m_provider = provider;
@@ -102,21 +105,25 @@ namespace ALittle
             if (m_project != null)
                 m_project.RemoveViewItem(m_item_id);
 
-            if (m_view.Properties.TryGetProperty(nameof(ALanguageServer), out ALanguageServer server))
-            {
-                // 检查Error更新
-                if (m_view.Properties.TryGetProperty(nameof(System.Timers.Timer), out System.Timers.Timer timer))
-                {
-                    timer.Stop();
-                    m_view.Properties.RemoveProperty(nameof(System.Timers.Timer));
+            m_view.Properties.TryGetProperty(nameof(ALanguageServer), out ALanguageServer server);
 
+            // 检查Error更新
+            if (m_view.Properties.TryGetProperty(nameof(System.Timers.Timer), out System.Timers.Timer timer))
+            {
+                timer.Stop();
+                m_view.Properties.RemoveProperty(nameof(System.Timers.Timer));
+
+                if (server != null)
+                {
                     string project_path = null;
                     if (m_project != null) project_path = m_project.GetProjectPath();
                     server.AddTask(() => server.UpdateViewError(m_view, project_path, m_full_path));
                     server.AddTask(() => server.UpdateViewReference(m_view, project_path, m_full_path));
                 }
-                server.AddTask(() => server.RemoveViewContent(m_full_path));
             }
+
+            if (server != null)
+                server.AddTask(() => server.RemoveViewContent(m_full_path));
 
             m_view.TextBuffer.Changed -= OnBufferChanged;
             m_view.GotAggregateFocus -= OnViewFocusIn;
@@ -151,7 +158,7 @@ namespace ALittle
             if (element != null)
             {
                 // 获取类型
-                ABnfNodeElement node = element as ABnfNodeElement;
+                var node = element as ABnfNodeElement;
                 if (node == null) node = element.GetParent();
                 if (node != null) target = node;
             }
@@ -162,6 +169,26 @@ namespace ALittle
 
             if (!indent.HasValue) return 0;
             return indent.Value;
+        }
+
+        public void RejustLineIndentation(int offset)
+		{
+            // 计算当前到前一个\n的位置
+            while (offset > 0 && m_view.TextBuffer.CurrentSnapshot[offset] != '\n')
+                --offset;
+            // 计算缩进
+            int indent = GetDesiredIndentation(offset);
+            // 从offset到不是空格和\t的字符
+            ++offset;
+            int start = offset;
+            while (offset < m_view.TextBuffer.CurrentSnapshot.Length
+                && (m_view.TextBuffer.CurrentSnapshot[offset] == ' ' || m_view.TextBuffer.CurrentSnapshot[offset] == '\t'))
+                ++offset;
+            int end = offset;
+
+            var replace = "";
+            for (int i = 0; i < indent; ++i) replace += " ";
+            m_view.TextBuffer.Replace(new Span(start, end - start), replace);
         }
 
         public void PushBodyIndentation(int offset)
@@ -253,13 +280,21 @@ namespace ALittle
             return false;
         }
         // 询问配对
-        public void PushAutoPair(int offset, char left_pair, string right_pair)
+        public bool PushAutoPair(int offset, char left_pair, string right_pair)
         {
-            if (!CheckAutoPair(offset, left_pair, right_pair)) return;
+            if (!CheckAutoPair(offset, left_pair, right_pair)) return false;
 
             m_view.TextBuffer.Insert(offset, right_pair);
             m_view.Caret.MoveToPreviousCaretPosition();
+            return true;
         }
+
+        // 处理输入
+        public bool TypeChar(int offset, char c)
+		{
+            if (m_factory == null) return false;
+            return m_factory.TypeChar(this, offset, c);
+		}
 
         // 检查文件路径是否发生变化
         public void CheckFullPath()
@@ -280,7 +315,7 @@ namespace ALittle
                 server.AddTask(() => server.FocusViewContent(m_full_path));
         }
 
-        // 获得焦点
+        // 失去焦点
         public void OnViewFocusOut(object sender, EventArgs e)
         {
         }

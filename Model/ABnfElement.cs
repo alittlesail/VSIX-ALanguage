@@ -183,5 +183,23 @@ namespace ALittle
         // 获取整棵数的内容
         public virtual void GetDesc(ref string indent, ref string result) { }
 
+        // 向前找到第一个\n并且，中间没有空格和\t
+        public virtual int FindForwardFirstEnterAndHaveNotSpaceOrTab()
+		{
+            int start = GetStart();
+            int end = GetEnd() - 1;
+            while (end >= 0 && m_file.m_text[end] != ' ' && m_file.m_text[end] != '\t' && m_file.m_text[end] != '\n')
+                --end;
+
+            for (int i = end; i >= start; --i)
+			{
+                if (m_file.m_text[i] == ' ' || m_file.m_text[i] == '\t')
+                    continue;
+                if (m_file.m_text[i] == '\n')
+                    return i;
+                break;
+			}
+            return -1;
+		}
     }
 }

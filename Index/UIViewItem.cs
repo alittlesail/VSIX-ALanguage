@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Windows;
+using System.Windows.Media.Animation;
 
 namespace ALittle
 {
@@ -142,15 +143,20 @@ namespace ALittle
             return ALanguageUtility.Comment(view, m_line_comment_begin, comment);
         }
 
-        // 解析缩进
-        public int GetDesiredIndentation(int offset)
-        {
+        public ABnfElement GetIndentRoot()
+		{
             if (m_indent_root == null)
             {
                 var file = new UIABnfFile(m_full_path, m_abnf_ui, m_view.TextBuffer.CurrentSnapshot.GetText());
                 m_indent_root = m_abnf_ui.Analysis(file);
             }
+            return m_indent_root;
+        }
 
+        // 解析缩进
+        public int GetDesiredIndentation(int offset)
+        {
+            m_indent_root = GetIndentRoot();
             if (m_indent_root == null) return 0;
             ABnfElement target = null;
             // 获取元素
@@ -171,29 +177,78 @@ namespace ALittle
             return indent.Value;
         }
 
+        public void RejustMultiLineIndentation(int line_start, int line_end)
+        {
+            for (int line_number = line_start; line_number <= line_end; ++line_number)
+			{
+                var line = m_view.TextBuffer.CurrentSnapshot.GetLineFromLineNumber(line_number);
+                if (line == null) continue;
+                RejustLineIndentation(line.Start);
+			}
+        }
+
+        // 调整offset所在的行
         public void RejustLineIndentation(int offset)
 		{
             // 计算当前到前一个\n的位置
-            while (offset > 0 && m_view.TextBuffer.CurrentSnapshot[offset] != '\n')
+            while (offset > 0 && m_view.TextBuffer.CurrentSnapshot[offset - 1] != '\n')
                 --offset;
             // 计算缩进
             int indent = GetDesiredIndentation(offset);
-            // 从offset到不是空格和\t的字符
-            ++offset;
             int start = offset;
-            while (offset < m_view.TextBuffer.CurrentSnapshot.Length
-                && (m_view.TextBuffer.CurrentSnapshot[offset] == ' ' || m_view.TextBuffer.CurrentSnapshot[offset] == '\t'))
+            int old_indent = 0;
+            while (offset < m_view.TextBuffer.CurrentSnapshot.Length)
+            {
+                var c = m_view.TextBuffer.CurrentSnapshot[offset];
+                if (c == ' ')
+                    old_indent += 1;
+                else if (c == '\t')
+                    old_indent += ALanguageSmartIndentProvider.s_indent_size;
+                else
+                    break;
                 ++offset;
+            }
             int end = offset;
+
+            // 如果是空行，那么就不需要缩进
+            if (end >= m_view.TextBuffer.CurrentSnapshot.Length
+                || m_view.TextBuffer.CurrentSnapshot[end] == '\n'
+                || m_view.TextBuffer.CurrentSnapshot[end] == '\r')
+            {
+                if (start != end)
+                    m_view.TextBuffer.Replace(new Span(start, end - start), "");
+                return;
+            }
+
+            if (indent == old_indent)
+                return;
 
             var replace = "";
             for (int i = 0; i < indent; ++i) replace += " ";
             m_view.TextBuffer.Replace(new Span(start, end - start), replace);
         }
 
+        // 获取某个范围内的行下标
+        public bool CalcLineNumbers(int start, int end, out int line_start, out int line_end)
+		{
+            line_start = 0;
+            line_end = 0;
+            if (start > end) return false;
+            line_start = m_view.TextBuffer.CurrentSnapshot.GetLineNumberFromPosition(start);
+            line_end = m_view.TextBuffer.CurrentSnapshot.GetLineNumberFromPosition(end);
+            if (line_start > line_end) return false;
+            return true;
+        }
+
+        // 获取总行数
+        public int GetLineCount()
+		{
+            return m_view.TextBuffer.CurrentSnapshot.LineCount;
+		}
+
         public void PushBodyIndentation(int offset)
         {
-            int indent = GetDesiredIndentation(offset);
+            int indent = GetDesiredIndentation(offset) - ALanguageSmartIndentProvider.s_indent_size;
 
             string add = "";
             for (int i = 0; i < indent; ++i) add += " ";
@@ -386,6 +441,7 @@ namespace ALittle
         // 格式化
         public void FormatDocument()
         {
+            if (m_factory.FormatViewContent(this)) return;
             if (m_view.Properties.TryGetProperty(nameof(ALanguageServer), out ALanguageServer server))
                 server.AddTask(() => server.FormatViewContent(m_full_path));
         }

@@ -32,8 +32,8 @@ namespace ALittle
         // 根据偏移位置，获取期望的元素
         public override ABnfElement GetException(int offset)
         {
-            if (offset < GetStart()) return null;
-            return this;
+            if (offset == GetStart()) return this;
+            return null;
         }
 
 

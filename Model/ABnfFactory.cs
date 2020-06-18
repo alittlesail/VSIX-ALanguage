@@ -203,5 +203,12 @@ namespace ALittle
 		{
             return false;
 		}
+
+        public virtual bool FormatViewContent(UIViewItem info)
+		{
+            if (info.GetLineCount() == 0) return true;
+            info.RejustMultiLineIndentation(0, info.GetLineCount() - 1);
+            return true;
+		}
     }
 }

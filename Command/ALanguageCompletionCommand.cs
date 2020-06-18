@@ -72,6 +72,7 @@ namespace ALittle
             bool handled = false;
             int hresult = VSConstants.S_OK;
             bool update_reference = false;
+            int paste_before = -1;
 
             // 1. Pre-process
             if (pguidCmdGroup == VSConstants.VSStd2K)
@@ -143,6 +144,17 @@ namespace ALittle
                         break;
                 }
             }
+            else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
+            {
+                switch ((VSConstants.VSStd97CmdID)nCmdID)
+                {
+                    case VSConstants.VSStd97CmdID.Paste:
+                        {
+                            paste_before = m_view.Caret.Position.BufferPosition.Position;
+                        }
+                        break;
+                }
+            }
 
             if (!handled)
                 hresult = Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
@@ -202,13 +214,13 @@ namespace ALittle
 
                                 if (m_view.Properties.TryGetProperty(nameof(ALanguageController), out ALanguageController controller))
                                 {
-                                    controller.OnTextInput(position-1);
+                                    controller.OnTextInput(position - 1);
                                 }
 
                                 if (!handle)
-								{
+                                {
                                     info.TypeChar(position, c);
-								}
+                                }
                             }
 
                             break;
@@ -218,6 +230,19 @@ namespace ALittle
                                     Cancel();
                                 else
                                     Filter();
+                            }
+                            break;
+                    }
+                }
+                else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
+                {
+                    switch ((VSConstants.VSStd97CmdID)nCmdID)
+                    {
+                        case VSConstants.VSStd97CmdID.Paste:
+                            {
+                                if (info == null) info = GetUIViewItem();
+                                if (info != null && info.CalcLineNumbers(paste_before, m_view.Caret.Position.BufferPosition.Position, out int line_start, out int line_end))
+                                    info.RejustMultiLineIndentation(line_start, line_end);
                             }
                             break;
                     }

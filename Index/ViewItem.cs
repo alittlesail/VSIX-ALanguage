@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
+using System;
 using System.Collections.Generic;
 using System.Windows;
 
@@ -79,11 +80,19 @@ namespace ALittle
             {
                 var info_list = new List<ALanguageClassifierInfo>();
                 if (m_file.GetRoot() != null) AnalysisClassificationTag(m_file.GetRoot(), info_list, false);
-                Application.Current.Dispatcher.Invoke(() =>
+
+                try
                 {
-                    if (m_view.Properties.TryGetProperty(nameof(ALanguageClassifier), out ALanguageClassifier tagger))
-                        tagger.Refresh(version, info_list);
-                });
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (m_view.Properties.TryGetProperty(nameof(ALanguageClassifier), out ALanguageClassifier tagger))
+                            tagger.Refresh(version, info_list);
+                    });
+                }
+                catch (Exception _)
+				{
+
+				}
             }
         }
 

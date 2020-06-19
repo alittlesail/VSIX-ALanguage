@@ -38,6 +38,12 @@ namespace ALittle
             return 0;
         }
 
+        // 获取缩进
+        public virtual int GetFormatIndentation(int offset, ABnfElement select)
+        {
+            return 0;
+        }
+
         // 函数调用时的函数提示
         public virtual ALanguageSignatureInfo QuerySignatureHelp(out int start, out int length)
         {

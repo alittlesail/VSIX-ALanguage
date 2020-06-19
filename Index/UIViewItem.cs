@@ -177,6 +177,30 @@ namespace ALittle
             return indent.Value;
         }
 
+        // 解析缩进
+        public int GetFormatIndentation(int offset)
+        {
+            m_indent_root = GetIndentRoot();
+            if (m_indent_root == null) return 0;
+            ABnfElement target = null;
+            // 获取元素
+            var element = m_indent_root.GetException(offset);
+            if (element != null)
+            {
+                // 获取类型
+                var node = element as ABnfNodeElement;
+                if (node == null) node = element.GetParent();
+                if (node != null) target = node;
+            }
+
+            int? indent = null;
+            if (target != null)
+                indent = target.GetReference().GetFormatIndentation(offset, element);
+
+            if (!indent.HasValue) return 0;
+            return indent.Value;
+        }
+
         public void RejustMultiLineIndentation(int line_start, int line_end)
         {
             for (int line_number = line_start; line_number <= line_end; ++line_number)
@@ -193,8 +217,15 @@ namespace ALittle
             // 计算当前到前一个\n的位置
             while (offset > 0 && m_view.TextBuffer.CurrentSnapshot[offset - 1] != '\n')
                 --offset;
+            // 再往后找到第一个非空字符
+            int indent_offset = offset;
+            while (indent_offset < m_view.TextBuffer.CurrentSnapshot.Length
+                && (m_view.TextBuffer.CurrentSnapshot[indent_offset] == ' ' || m_view.TextBuffer.CurrentSnapshot[indent_offset] == '\t')
+                && (m_view.TextBuffer.CurrentSnapshot[indent_offset] != '\r' || m_view.TextBuffer.CurrentSnapshot[indent_offset] != '\n'))
+                ++indent_offset;
+            // 再往后找到第一个不是空格和\t的位置
             // 计算缩进
-            int indent = GetDesiredIndentation(offset);
+            int indent = GetFormatIndentation(indent_offset);
             int start = offset;
             int old_indent = 0;
             while (offset < m_view.TextBuffer.CurrentSnapshot.Length)

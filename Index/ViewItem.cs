@@ -89,7 +89,7 @@ namespace ALittle
                             tagger.Refresh(version, info_list);
                     });
                 }
-                catch (Exception _)
+                catch (Exception)
 				{
 
 				}

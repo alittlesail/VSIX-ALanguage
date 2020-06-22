@@ -83,7 +83,7 @@ namespace ALittle
             var error = element.GetReference().CheckError();
             if (error != null)
             {
-                if (error.GetElement() != null)
+                if (error.GetElement() != null && error.GetElement().GetFile() == this)
                     AddAnalysisErrorInfo(error.GetElement(), error.GetError());
             }
             var node = element as ABnfNodeElement;

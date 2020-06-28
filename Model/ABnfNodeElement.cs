@@ -105,7 +105,7 @@ namespace ALittle
         public override int GetEndCol()
         {
             if (m_end_col < 0) CalcEnd();
-            return m_end_line;
+            return m_end_col;
         }
 
         private void CalcEnd()

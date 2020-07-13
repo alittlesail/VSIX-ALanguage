@@ -39,7 +39,7 @@ namespace ALittle
         }
 
         // 获取缩进
-        public virtual int GetFormatIndentation(int offset, ABnfElement select)
+        public virtual int GetFormateIndentation(int offset, ABnfElement select)
         {
             return 0;
         }

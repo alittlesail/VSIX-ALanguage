@@ -178,7 +178,7 @@ namespace ALittle
         }
 
         // 解析缩进
-        public int GetFormatIndentation(int offset)
+        public int GetFormateIndentation(int offset)
         {
             m_indent_root = GetIndentRoot();
             if (m_indent_root == null) return 0;
@@ -195,7 +195,7 @@ namespace ALittle
 
             int? indent = null;
             if (target != null)
-                indent = target.GetReference().GetFormatIndentation(offset, element);
+                indent = target.GetReference().GetFormateIndentation(offset, element);
 
             if (!indent.HasValue) return 0;
             return indent.Value;
@@ -225,7 +225,7 @@ namespace ALittle
                 ++indent_offset;
             // 再往后找到第一个不是空格和\t的位置
             // 计算缩进
-            int indent = GetFormatIndentation(indent_offset);
+            int indent = GetFormateIndentation(indent_offset);
             int start = offset;
             int old_indent = 0;
             while (offset < m_view.TextBuffer.CurrentSnapshot.Length)

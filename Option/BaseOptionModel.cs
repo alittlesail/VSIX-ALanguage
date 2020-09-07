@@ -57,8 +57,9 @@ namespace ALittle
         public virtual async Task LoadAsync()
         {
             ShellSettingsManager manager = await s_settings_manager.GetValueAsync();
+            if (manager == null) return;
             SettingsStore settingsStore = manager.GetReadOnlySettingsStore(SettingsScope.UserSettings);
-
+            if (settingsStore == null) return;
             if (!settingsStore.CollectionExists(CollectionName)) return;
 
             LoadProperty(settingsStore);

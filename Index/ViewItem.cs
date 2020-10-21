@@ -573,10 +573,16 @@ namespace ALittle
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var line_number = m_view.Caret.ContainingTextViewLine.Start.GetContainingLine().LineNumber;
+                var col_number = m_view.Caret.Position.BufferPosition.Position - m_view.Caret.ContainingTextViewLine.Start.Position;
                 m_view.TextBuffer.Replace(new Span(0, m_view.TextBuffer.CurrentSnapshot.Length), buffer);
                 var line = m_view.TextBuffer.CurrentSnapshot.GetLineFromLineNumber(line_number);
                 if (line != null)
-                    m_view.Caret.MoveTo(line.Start);
+                {
+                    if (line.Start + col_number < line.End)
+                        m_view.Caret.MoveTo(line.Start + col_number);
+                    else
+                        m_view.Caret.MoveTo(line.End);
+                }
                 else
                     m_view.Caret.MoveToPreviousCaretPosition();
             });
